@@ -372,7 +372,8 @@ PlasmaCore.Dialog {
                                 let zoneItem = layoutItem.children[zoneIndex]
                                 if(isHovering(zoneItem)) {
                                     hoveringZone = zoneIndex
-                                    setLayoutInActiveScreen(layoutIndex)
+                                    if (config.nonGlobalActiveLayout) setLayoutInActiveScreen(layoutIndex)
+                                    else currentLayout = layoutIndex
                                 }
                             })
                         
