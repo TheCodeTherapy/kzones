@@ -77,6 +77,12 @@ The script will remember the geometry of each window when it's moved to a zone. 
 
 - Enable or disable this behavior.
 
+#### Separate active layout for each screen, desktop and activity
+
+By default, the active layout is shared between all screens, desktops and activities. When this option is enabled, each screen, desktop and activity will have it's own active layout.
+
+- Enable or disable this behavior.
+
 ### Layouts
 
 You can define your own layouts by modifying the JSON in the **Layouts** tab in the script settings, here are some examples to get you started:

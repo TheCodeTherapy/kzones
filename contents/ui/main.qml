@@ -54,6 +54,7 @@ PlasmaCore.Dialog {
             zoneOverlayShowWhen: KWin.readConfig("zoneOverlayShowWhen", 0), // show zone overlay when
             zoneOverlayHighlightTarget: KWin.readConfig("zoneOverlayHighlightTarget", 0), // highlight target zone
             rememberWindowGeometries: KWin.readConfig("rememberWindowGeometries", true), // remember window geometries before snapping to a zone, and restore them when the window is removed from their zone
+            nonGlobalActiveLayout: KWin.readConfig("nonGlobalActiveLayout", false), // use a different layout for each screen, desktop and activity
             layouts: JSON.parse(KWin.readConfig("layoutsJson", '[{"name":"Priority Grid","padding":0,"zones":[{"x":0,"y":0,"height":100,"width":25},{"x":25,"y":0,"height":100,"width":50},{"x":75,"y":0,"height":100,"width":25}]},{"name":"Quadrant Grid","zones":[{"x":0,"y":0,"height":50,"width":50},{"x":0,"y":50,"height":50,"width":50},{"x":50,"y":50,"height":50,"width":50},{"x":50,"y":0,"height":50,"width":50}]}]')), // layouts
             filterMode: KWin.readConfig("filterMode", 0), // filter mode
             filterList: KWin.readConfig("filterList", ""), // filter list
@@ -130,7 +131,7 @@ PlasmaCore.Dialog {
         activeScreen = workspace.activeScreen
         clientArea = workspace.clientArea(KWin.FullScreenArea, activeScreen, workspace.currentDesktop)
         displaySize = workspace.displaySize
-        currentLayout = getLayoutInActiveScreen()
+        if (config.nonGlobalActiveLayout) currentLayout = getLayoutInActiveScreen()
     }
 
     function isPointInside(x, y, geometry) {
@@ -218,7 +219,7 @@ PlasmaCore.Dialog {
         log("Moving client " + client.resourceClass.toString() + " to zone " + zone)
 
         clientArea = workspace.clientArea(KWin.FullScreenArea, client.screen, workspace.currentDesktop)
-        currentLayout = getLayoutInActiveClientScreen()
+        if (config.nonGlobalActiveLayout) currentLayout = getLayoutInActiveClientScreen()
         saveWindowGeometries(client, zone)
 
         // move client to zone
@@ -252,7 +253,7 @@ PlasmaCore.Dialog {
 
         // save zone
         client.zone = zone
-        client.layout = getLayoutInActiveClientScreen()
+        client.layout = config.nonGlobalActiveLayout ? getLayoutInActiveClientScreen() : currentLayout
         client.desktop = workspace.currentDesktop
         client.activity = workspace.currentActivity
     }
@@ -261,6 +262,7 @@ PlasmaCore.Dialog {
 
         // register window
         KWin.registerWindow(mainDialog)
+        mainDialog.loadConfig()
 
         // refresh client area
         refreshClientArea()        
@@ -268,11 +270,12 @@ PlasmaCore.Dialog {
         // shortcut: cycle through layouts
         bindShortcut("Cycle layouts", "Ctrl+Alt+D", function() {
             //cycle through layouts
-            let layout = getLayoutInActiveScreen()
+            let layout = config.nonGlobalActiveLayout ? getLayoutInActiveScreen() : currentLayout
             layout = (layout + 1) % config.layouts.length
             highlightedZone = -1
             osdCmd.exec(config.layouts[layout].name)
-            setLayoutInActiveScreen(layout)
+            if (config.nonGlobalActiveLayout) setLayoutInActiveScreen(layout)
+            else currentLayout = layout
         })
 
         // shortcut: move to zone (1-9)
@@ -286,7 +289,7 @@ PlasmaCore.Dialog {
         bindShortcut("Move active window to next zone", "Ctrl+Alt+Right", function() {
             const client = workspace.activeClient
             // TODO: if client.zone = -1 check if client is in a zone by geometry
-            const zonesLength = config.layouts[getLayoutInActiveClientScreen()].zones.length
+            const zonesLength = config.layouts[config.nonGlobalActiveLayout ? getLayoutInActiveClientScreen() : currentLayout].zones.length
             moveClientToZone(client, (client.zone + 1) % zonesLength)
         })
 
@@ -294,7 +297,7 @@ PlasmaCore.Dialog {
         bindShortcut("Move active window to previous zone", "Ctrl+Alt+Left", function() {
             const client = workspace.activeClient
             // TODO: if client.zone = -1 check if client is in a zone by geometry
-            const zonesLength = config.layouts[getLayoutInActiveClientScreen()].zones.length
+            const zonesLength = config.layouts[config.nonGlobalActiveLayout ? getLayoutInActiveClientScreen() : currentLayout].zones.length
             moveClientToZone(client, (client.zone - 1 + zonesLength) % zonesLength)
         })
 
@@ -318,8 +321,6 @@ PlasmaCore.Dialog {
             let layout = workspace.activeClient.layout
             switchWindowInZone(zone, layout, true)
         })
-
-        mainDialog.loadConfig()
 
         // match all clients to zones
         for (var i = 0; i < workspace.clientList().length; i++) {
