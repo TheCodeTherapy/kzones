@@ -65,7 +65,9 @@ PlasmaCore.Dialog {
             // polling rate in milliseconds
             pollingRate: KWin.readConfig("pollingRate", 100),
             // enable debug mode
-            enableDebugMode: KWin.readConfig("enableDebugMode", false)
+            enableDebugMode: KWin.readConfig("enableDebugMode", false),
+            // screen edge
+            screenEdge: KWin.readConfig("BorderActivate", "")
         };
         log("Config loaded: " + JSON.stringify(config));
     }
@@ -303,6 +305,19 @@ PlasmaCore.Dialog {
                     sequence: "Ctrl+Alt+Num+" + modelData
                     onActivated: {
                         moveClientToZone(Workspace.activeWindow, modelData - 1);
+                    }
+                }
+            }
+        }
+
+        Repeater {
+            model: (config.screenEdge) ? config.screenEdge.toString().split(",").map(x => parseInt(x)) : []
+            delegate: Item {
+                ScreenEdgeHandler {
+                    enabled: true
+                    edge: modelData
+                    onActivated: {
+                        osdDbus.exec("Screen edge " + modelData + " activated");
                     }
                 }
             }

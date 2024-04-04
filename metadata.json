@@ -25,5 +25,6 @@
     "X-Plasma-MainScriptX": "code/main.js",
     "X-Plasma-API-Minimum-Version": "6.0",
     "KPackageStructure": "KWin/Script",
-    "X-KDE-PluginKeyword": "kzones"
+    "X-KDE-PluginKeyword": "kzones",
+    "X-KWin-Border-Activate": "true"
 }
